@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tracer des traits entre deux points de différentes couleurs</title>
+  <style>
+    #canvas-container {
+      position: relative;
+    }
+
+    #canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      border: 1px solid #000;
+    }
+  </style>
+</head>
+<body>
+
+<div id="canvas-container">
+  <img id="background-image" src="https://img.freepik.com/vecteurs-premium/station-ski-telepherique-telesiege-teleski_40816-838.jpg" alt="Votre Image" width="1000" height="500">
+  <canvas id="canvas" width="1000" height="500"></canvas>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var canvas = document.getElementById('canvas');
+    var ctx = canvas.getContext('2d');
+    var isDrawing = false;
+    var startPoint, endPoint;
+    var currentColor;
+    var forbiddenZoneStartY;
+
+    function drawPoints(start, end, color) {
+      ctx.beginPath();
+      ctx.arc(start.x, start.y, 5, 0, 2 * Math.PI);
+      ctx.fillStyle = color;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(end.x, end.y, 5, 0, 2 * Math.PI);
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+    function setupDrawing(start, end, color) {
+      drawPoints(start, end, color);
+
+      forbiddenZoneStartY = start.y - 15;
+
+      canvas.addEventListener('mousedown', function(e) {
+        var mouseX = e.clientX - canvas.getBoundingClientRect().left;
+        var mouseY = e.clientY - canvas.getBoundingClientRect().top;
+
+        if (!isDrawing && distance(mouseX, mouseY, start.x, start.y) < 10) {
+          isDrawing = true;
+          currentColor = color;
+          ctx.beginPath();
+          ctx.moveTo(start.x, start.y);
+        }
+      });
+
+      canvas.addEventListener('mousemove', function(e) {
+        if (!isDrawing) return;
+
+        var mouseX = e.clientX - canvas.getBoundingClientRect().left;
+        var mouseY = e.clientY - canvas.getBoundingClientRect().top;
+
+        // Si la souris atteint la zone interdite
+        if (isDrawing && mouseY < forbiddenZoneStartY) {
+          stopDrawing();
+          return;
+        }
+
+        ctx.lineTo(mouseX, mouseY);
+        ctx.strokeStyle = currentColor;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      });
+
+      canvas.addEventListener('mouseup', function() {
+        if (isDrawing) {
+          isDrawing = false;
+        }
+      });
+
+      canvas.addEventListener('mouseleave', function() {
+        if (isDrawing) {
+          isDrawing = false;
+          stopDrawing();
+        }
+      });
+    }
+
+    function stopDrawing() {
+      ctx.fillStyle = 'red';
+      ctx.font = '20px Arial';
+      ctx.fillText('PERDU, Recommence une nouvelle fois', canvas.width / 2 - 200, canvas.height / 2);
+      setTimeout(function() {
+        location.reload(); // Rafraîchit la page après 2 secondes
+      }, 2000);
+    }
+
+    // Cas 1: Points rouges
+    startPoint = { x: 200, y: 180 };
+    endPoint = { x: 900, y: 420 };
+    setupDrawing(startPoint, endPoint, 'red');
+
+    // Cas 2: Points bleus
+    startPoint = { x: 280, y: 120 };
+    endPoint = { x: 125, y: 420 };
+    setupDrawing(startPoint, endPoint, 'blue');
+
+    // Cas 3: Points verts
+    startPoint = { x: 125, y: 225 };
+    endPoint = { x: 330, y: 320 };
+    setupDrawing(startPoint, endPoint, 'green');
+
+    // Cas 4: Points noirs
+    startPoint = { x: 680, y: 125 };
+    endPoint = { x: 550, y: 420 };
+    setupDrawing(startPoint, endPoint, 'black');
+  });
+  
+  function distance(x1, y1, x2, y2) {
+    return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+  }
+</script>
+
+</body>
+</html>
